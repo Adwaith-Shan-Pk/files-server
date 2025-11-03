@@ -18,7 +18,7 @@
   "bugs": {
     "url": "https://github.com/Adwaith-Shan-Pk/files-server/issues"
   },
-  "homepage": "https://github.com/Adwaith-Shan-Pk/files-server#readme"
+  
   "devDependencies": {
     "serve": "^14.2.1"
   }
