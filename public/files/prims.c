@@ -51,3 +51,19 @@ int main() {
 
     return 0;
 }
+
+
+PRIM_MST(AdjW, n, s):
+ 1. inMST[1..n] ← FALSE; key[1..n] ← ∞; parent[1..n] ← NIL
+ 2. key[s] ← 0
+ 3. PQ ← empty min-PQ; INSERT (0, s)
+ 4. total ← 0
+ 5. While PQ not empty:
+ 5.1 (k, u) ← EXTRACT_MIN(PQ)
+ 5.2 If inMST[u] = TRUE: continue
+ 5.3 inMST[u] ← TRUE; total ← total + k
+ 5.4 For each (v, w) in AdjW[u]:
+ If inMST[v] = FALSE and w < key[v]:
+ key[v] ← w; parent[v] ← u; INSERT (key[v], v)
+ 6. MST ← edges {(parent[v], v, key[v]) | v ≠ s}
+ 7. Return (MST, total)
