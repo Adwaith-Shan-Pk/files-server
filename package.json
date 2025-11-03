@@ -4,8 +4,8 @@
   "description": "Quick file server via curl",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "build": "node build.js",
+    "start": "npx serve public"
   },
   "repository": {
     "type": "git",
@@ -18,8 +18,8 @@
   "bugs": {
     "url": "https://github.com/Adwaith-Shan-Pk/files-server/issues"
   },
-  "homepage": "https://github.com/Adwaith-Shan-Pk/files-server#readme",
-  "dependencies": {
-    "express": "^5.1.0"
+  "homepage": "https://github.com/Adwaith-Shan-Pk/files-server#readme"
+  "devDependencies": {
+    "serve": "^14.2.1"
   }
 }
