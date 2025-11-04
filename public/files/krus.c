@@ -1,178 +1,73 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-// 1. Structure to represent an edge in the graph
 struct Edge {
-    int src, dest, weight;
+    int u, v, w;
 };
 
-// 2. Structure to represent a graph
-struct Graph {
-    int V, E;           // V: number of vertices, E: number of edges
-    struct Edge* edge;  // Array of edges
-};
+struct Edge edges[100], mst[100];
+int parent[100];
+int n, e;
 
-// 3. Structure to represent a subset for Disjoint Set Union (DSU)
-struct Subset {
-    int parent;
-    int rank; // Used for Union by Rank optimization
-};
-
-// A utility function to create a graph with V vertices and E edges
-struct Graph* createGraph(int V, int E) {
-    struct Graph* graph = (struct Graph*)malloc(sizeof(struct Graph));
-    graph->V = V;
-    graph->E = E;
-    // Allocate memory for E edges
-    graph->edge = (struct Edge*)malloc(graph->E * sizeof(struct Edge));
-    return graph;
+int find(int i) {
+    while (parent[i] != i)
+        i = parent[i];
+    return i;
 }
 
-// DSU function with Path Compression: Finds the representative (root) of set i
-int find(struct Subset subsets[], int i) {
-    // Base case: if element is the root of its set
-    if (subsets[i].parent == i)
-        return i;
-
-    // Path Compression: recursively find the root and update the parent
-    subsets[i].parent = find(subsets, subsets[i].parent);
-    return subsets[i].parent;
+void unionSet(int i, int j) {
+    int a = find(i);
+    int b = find(j);
+    parent[a] = b;
 }
 
-// DSU function with Union by Rank: Merges the sets of x and y
-void Union(struct Subset subsets[], int x, int y) {
-    int rootX = find(subsets, x);
-    int rootY = find(subsets, y);
-
-    // Attach the tree with smaller rank to the root of the tree with higher rank
-    if (rootX != rootY) {
-        if (subsets[rootX].rank < subsets[rootY].rank) {
-            subsets[rootX].parent = rootY;
-        } else if (subsets[rootX].rank > subsets[rootY].rank) {
-            subsets[rootY].parent = rootX;
-        } else {
-            // If ranks are the same, make one root the parent and increment its rank
-            subsets[rootY].parent = rootX;
-            subsets[rootX].rank++;
+void sortEdges() {
+    struct Edge temp;
+    for (int i = 0; i < e - 1; i++) {
+        for (int j = 0; j < e - i - 1; j++) {
+            if (edges[j].w > edges[j + 1].w ||
+               (edges[j].w == edges[j + 1].w && edges[j].u > edges[j + 1].u) ||
+               (edges[j].w == edges[j + 1].w && edges[j].u == edges[j + 1].u && edges[j].v > edges[j + 1].v)) {
+                temp = edges[j];
+                edges[j] = edges[j + 1];
+                edges[j + 1] = temp;
+            }
         }
     }
 }
 
-// Comparison function used by qsort() to sort edges based on their weight
-int compareEdges(const void* a, const void* b) {
-    // Cast void pointers to Edge pointers
-    struct Edge* edgeA = (struct Edge*)a;
-    struct Edge* edgeB = (struct Edge*)b;
-    // Compare weights (smallest first)
-    return edgeA->weight - edgeB->weight;
-}
-
-// The main function to construct MST using Kruskal's algorithm
-void kruskalMST(struct Graph* graph) {
-    int V = graph->V;
-    int E = graph->E;
-    struct Edge result[V];  // Stores the resulting MST edges
-    int e = 0;              // Index used for the result[] array
-    int i = 0;              // Index used for sorted_edges
-
-    // Step 2: Sort all the edges in non-decreasing order of their weight
-    // We use C's standard library qsort function
-    qsort(graph->edge, E, sizeof(graph->edge[0]), compareEdges);
-
-    // Step 1: Initialize V subsets (DSU structure)
-    struct Subset* subsets = (struct Subset*)malloc(V * sizeof(struct Subset));
-
-    // Initially, all vertices are in different sets and have rank 0
-    for (int v = 0; v < V; ++v) {
-        subsets[v].parent = v;
-        subsets[v].rank = 0;
-    }
-
-    // Step 3: Iterate through sorted edges
-    printf("\n--- Kruskal's Algorithm Trace ---\n");
-    printf("Processing edges in ascending order of weight...\n");
-
-    while (e < V - 1 && i < E) {
-        struct Edge next_edge = graph->edge[i++];
-
-        int x = find(subsets, next_edge.src);
-        int y = find(subsets, next_edge.dest);
-
-        // Check if adding this edge forms a cycle
-        if (x != y) {
-            // No cycle: Add this edge to MST and perform Union
-            result[e++] = next_edge;
-            Union(subsets, x, y);
-            printf("  [ACCEPTED] Edge %d-%d (Weight: %d). MST Edges: %d/%d\n", 
-                   next_edge.src, next_edge.dest, next_edge.weight, e, V - 1);
-        } else {
-            // Cycle detected: Discard the edge
-            printf("  [REJECTED] Edge %d-%d (Weight: %d). Creates a cycle.\n",
-                   next_edge.src, next_edge.dest, next_edge.weight);
+void kruskal() {
+    int i, j = 0, total = 0;
+    sortEdges();
+    for (i = 0; i < n; i++)
+        parent[i] = i;
+    for (i = 0; i < e; i++) {
+        int u = edges[i].u;
+        int v = edges[i].v;
+        int w = edges[i].w;
+        if (find(u) != find(v)) {
+            mst[j++] = edges[i];
+            unionSet(u, v);
+            total += w;
+            if (j == n - 1)
+                break;
         }
     }
-
-    // Print the final MST
-    printf("\n--- Minimum Spanning Tree ---\n");
-    int minimumCost = 0;
-    printf("Edges in the MST:\n");
-    for (i = 0; i < e; ++i) {
-        printf("  %d -- %d \t(Weight: %d)\n", result[i].src, result[i].dest, result[i].weight);
-        minimumCost += result[i].weight;
-    }
-    printf("\nTotal Minimum Cost: %d\n", minimumCost);
-
-    // Clean up memory
-    free(subsets);
+    printf("\nEdges in MST:\n");
+    for (i = 0; i < j; i++)
+        printf("%d - %d : %d\n", mst[i].u, mst[i].v, mst[i].w);
+    printf("Total cost of MST: %d\n", total);
 }
 
-// Driver code to test the function
 int main() {
-    /*
-        Example Graph (V=4, E=5)
-        Edges:
-        0-1 (10)
-        0-2 (6)
-        0-3 (5)
-        1-3 (15)
-        2-3 (4)
-    */
-    int V = 4; // Number of vertices (0, 1, 2, 3)
-    int E = 5; // Number of edges
-    struct Graph* graph = createGraph(V, E);
-
-    // Edge 0-1, weight 10
-    graph->edge[0].src = 0;
-    graph->edge[0].dest = 1;
-    graph->edge[0].weight = 10;
-
-    // Edge 0-2, weight 6
-    graph->edge[1].src = 0;
-    graph->edge[1].dest = 2;
-    graph->edge[1].weight = 6;
-
-    // Edge 0-3, weight 5
-    graph->edge[2].src = 0;
-    graph->edge[2].dest = 3;
-    graph->edge[2].weight = 5;
-
-    // Edge 1-3, weight 15
-    graph->edge[3].src = 1;
-    graph->edge[3].dest = 3;
-    graph->edge[3].weight = 15;
-
-    // Edge 2-3, weight 4
-    graph->edge[4].src = 2;
-    graph->edge[4].dest = 3;
-    graph->edge[4].weight = 4;
-
-    kruskalMST(graph);
-
-    // Clean up graph memory
-    free(graph->edge);
-    free(graph);
-
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+    printf("Enter number of edges: ");
+    scanf("%d", &e);
+    printf("Enter edges (u v w):\n");
+    for (int i = 0; i < e; i++)
+        scanf("%d%d%d", &edges[i].u, &edges[i].v, &edges[i].w);
+    kruskal();
     return 0;
 }
 
