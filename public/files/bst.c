@@ -1,188 +1,117 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Structure for a BST Node
 struct Node {
     int key;
-    struct Node *left;
-    struct Node *right;
+    struct Node *left, *right;
 };
 
-// Utility function to create a new BST Node
-struct Node* newNode(int item) {
-    struct Node* temp = (struct Node*)malloc(sizeof(struct Node));
-    temp->key = item;
-    temp->left = temp->right = NULL;
-    return temp;
+struct Node* createNode(int key) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    newNode->key = key;
+    newNode->left = newNode->right = NULL;
+    return newNode;
 }
 
-// Utility function to perform Inorder Traversal
+struct Node* insert(struct Node* root, int key) {
+    if (root == NULL)
+        return createNode(key);
+    if (key < root->key)
+        root->left = insert(root->left, key);
+    else if (key > root->key)
+        root->right = insert(root->right, key);
+    return root;
+}
+
+struct Node* search(struct Node* root, int key) {
+    if (root == NULL || root->key == key)
+        return root;
+    if (key < root->key)
+        return search(root->left, key);
+    return search(root->right, key);
+}
+
 void inorder(struct Node* root) {
-    if (root != NULL) {
-        inorder(root->left);
-        printf("%d ", root->key);
-        inorder(root->right);
-    }
+    if (root == NULL)
+        return;
+    inorder(root->left);
+    printf("%d ", root->key);
+    inorder(root->right);
 }
 
-// Utility function to perform Preorder Traversal
-void preorder(struct Node* root) {
-    if (root != NULL) {
-        printf("%d ", root->key);
-        preorder(root->left);
-        preorder(root->right);
-    }
-}
-
-// Utility function to perform Postorder Traversal
-void postorder(struct Node* root) {
-    if (root != NULL) {
-        postorder(root->left);
-        postorder(root->right);
-        printf("%d ", root->key);
-    }
-}
-
-
-// Function to insert a new key in the BST
-struct Node* insert(struct Node* node, int key) {
-    // If the tree is empty, return a new node
-    if (node == NULL) return newNode(key);
-
-    // Otherwise, recur down the tree
-    if (key < node->key)
-        node->left = insert(node->left, key);
-    else if (key > node->key)
-        node->right = insert(node->right, key);
-
-    // Return the (unchanged) node pointer
+struct Node* findMin(struct Node* node) {
+    while (node->left != NULL)
+        node = node->left;
     return node;
 }
 
-// Function to find the node with the minimum key value (smallest node in a BST)
-struct Node* minValueNode(struct Node* node) {
-    struct Node* current = node;
-
-    // Loop down to find the leftmost leaf
-    while (current && current->left != NULL)
-        current = current->left;
-
-    return current;
-}
-
-// Function to delete a node with the given key from the BST
 struct Node* deleteNode(struct Node* root, int key) {
-    // Base case: If the tree is empty
-    if (root == NULL) return root;
-
-    // 1. Recur down the tree to find the node
+    if (root == NULL)
+        return root;
     if (key < root->key)
         root->left = deleteNode(root->left, key);
     else if (key > root->key)
         root->right = deleteNode(root->right, key);
-    
-    // 2. If the key is the same as root's key, this is the node to be deleted
     else {
-        // Case 1: Node with only one child or no child
-        if (root->left == NULL) {
-            struct Node *temp = root->right;
-            free(root);
-            return temp;
-        } else if (root->right == NULL) {
-            struct Node *temp = root->left;
-            free(root);
-            return temp;
-        }
-
-        // Case 2: Node with two children
-        // Get the inorder successor (smallest in the right subtree)
-        struct Node* temp = minValueNode(root->right);
-
-        // Copy the inorder successor's content to this node
+        if (root->left == NULL)
+            return root->right;
+        else if (root->right == NULL)
+            return root->left;
+        struct Node* temp = findMin(root->right);
         root->key = temp->key;
-
-        // Delete the inorder successor
         root->right = deleteNode(root->right, temp->key);
     }
     return root;
 }
 
-// Utility function to free all memory used by the BST
-void destroyBST(struct Node* root) {
-    if (root != NULL) {
-        destroyBST(root->left);
-        destroyBST(root->right);
-        free(root);
-    }
+void rangeQuery(struct Node* root, int L, int R) {
+    if (root == NULL)
+        return;
+    if (root->key > L)
+        rangeQuery(root->left, L, R);
+    if (root->key >= L && root->key <= R)
+        printf("%d ", root->key);
+    if (root->key < R)
+        rangeQuery(root->right, L, R);
 }
-
-// =================================================================
-// 2. Driver Code
-// =================================================================
 
 int main() {
     struct Node* root = NULL;
-
-    printf("--- Binary Search Tree (BST) Operations ---\n");
-
-    // --- Insertion Demonstration ---
-    int keys_to_insert[] = {50, 30, 70, 20, 40, 60, 80};
-    int num_keys = sizeof(keys_to_insert) / sizeof(keys_to_insert[0]);
-
-    printf("\n1. Inserting keys: ");
-    for (int i = 0; i < num_keys; i++) {
-        root = insert(root, keys_to_insert[i]);
-        printf("%d ", keys_to_insert[i]);
+    int choice = 0, key, L, R;
+    while (choice != 6) {
+        printf("\n1. Insert\n2. Delete\n3. Search\n4. Inorder Traversal\n5. Range Query\n6. Exit\nEnter choice: ");
+        scanf("%d", &choice);
+        if (choice == 1) {
+            printf("Enter key to insert: ");
+            scanf("%d", &key);
+            root = insert(root, key);
+        } else if (choice == 2) {
+            printf("Enter key to delete: ");
+            scanf("%d", &key);
+            root = deleteNode(root, key);
+        } else if (choice == 3) {
+            printf("Enter key to search: ");
+            scanf("%d", &key);
+            if (search(root, key))
+                printf("Key found.\n");
+            else
+                printf("Key not found.\n");
+        } else if (choice == 4) {
+            printf("Inorder Traversal: ");
+            inorder(root);
+            printf("\n");
+        } else if (choice == 5) {
+            printf("Enter range (L R): ");
+            scanf("%d%d", &L, &R);
+            printf("Keys in range [%d, %d]: ", L, R);
+            rangeQuery(root, L, R);
+            printf("\n");
+        } else if (choice == 6) {
+            printf("Exiting...\n");
+        } else {
+            printf("Invalid choice.\n");
+        }
     }
-    printf("\n");
-
-    // --- Traversal Demonstration ---
-    printf("\n2. Traversal Order:\n");
-    printf("   Inorder (Sorted): ");
-    inorder(root);
-    printf("\n");
-    
-    printf("   Preorder:         ");
-    preorder(root);
-    printf("\n");
-    
-    printf("   Postorder:        ");
-    postorder(root);
-    printf("\n");
-
-
-    // --- Deletion Demonstration ---
-    printf("\n3. Deletion Operations:\n");
-
-    // Delete a leaf node (e.g., 20)
-    printf("   Deleting 20 (Leaf)... ");
-    root = deleteNode(root, 20);
-    printf("Inorder: ");
-    inorder(root);
-    printf("\n");
-
-    // Delete a node with one child (e.g., 70)
-    printf("   Deleting 70 (One child)... ");
-    root = deleteNode(root, 70);
-    printf("Inorder: ");
-    inorder(root);
-    printf("\n");
-
-    // Delete a node with two children (e.g., 50 - the root)
-    printf("   Deleting 50 (Two children)... ");
-    root = deleteNode(root, 50);
-    printf("Inorder: ");
-    inorder(root);
-    printf("\n");
-    
-    // Final state
-    printf("\nFinal Inorder Traversal: ");
-    inorder(root);
-    printf("\n");
-
-    // Clean up memory
-    destroyBST(root);
-
     return 0;
 }
 
